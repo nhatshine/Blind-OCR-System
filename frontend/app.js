@@ -5,6 +5,8 @@ const statusReader = document.getElementById('status-reader');
 
 let stream = null;
 let isCameraOn = false;
+let isFlat = true; // Trạng thái thăng bằng của điện thoại
+let isWarningOrientation = false; // Cờ chống đọc cảnh báo liên tục
 
 // ĐỊA CHỈ API CỦA BACKEND (Sẽ thay đổi nếu chạy qua Ngrok trên điện thoại)
 const BACKEND_API_URL = "http://127.0.0.1:8000/upload";
@@ -31,6 +33,25 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
 }
 
+// Hàm đọc và phân tích cảm biến thăng bằng Gyroscope
+function handleOrientation(event) {
+    let beta = event.beta;   // Góc nghiêng trước/sau [-180,180]
+    let gamma = event.gamma; // Góc nghiêng trái/phải [-90,90]
+    
+    if (beta === null || gamma === null) {
+        isFlat = true; // Thiết bị không hỗ trợ, mặc định cho qua
+        return;
+    }
+
+    // ĐT nằm song song với mặt bàn nếu beta và gamma gần bằng 0
+    // Cho phép dung sai 15 độ
+    if (Math.abs(beta) < 15 && Math.abs(gamma) < 15) {
+        isFlat = true;
+    } else {
+        isFlat = false;
+    }
+}
+
 // Bắt sự kiện bàn phím (Phím C)
 document.addEventListener('keydown', async (event) => {
     if (event.key.toLowerCase() === 'c') {
@@ -49,7 +70,22 @@ document.body.addEventListener('click', async () => {
 
 async function startCameraAndCapture() {
     try {
-        speak("Đã bật Camera. Vui lòng giữ im tài liệu trước máy ảnh trong 3 giây.");
+        // Xin quyền Gyroscope trên iOS 13+
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                if (permissionState === 'granted') {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            } catch (error) {
+                console.error("Gyroscope permission error:", error);
+            }
+        } else {
+            // Android hoặc các trình duyệt khác
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        speak("Đã bật Camera. Vui lòng giữ máy thẳng song song với tài liệu.");
         
         // Mở Camera (Bắt buộc dùng Camera sau trên điện thoại nhờ facingMode: environment)
         stream = await navigator.mediaDevices.getUserMedia({
@@ -61,17 +97,27 @@ async function startCameraAndCapture() {
         cameraContainer.style.display = 'block';
         isCameraOn = true;
 
-        // Bắt đầu đếm ngược 3 giây
+        // Bắt đầu đếm ngược 3 giây nhưng có kiểm tra cảm biến nghiêng
         let countdown = 3;
         const interval = setInterval(() => {
+            if (!isFlat) {
+                if (!isWarningOrientation) {
+                    speak("Điện thoại đang bị nghiêng, vui lòng giữ máy thẳng song song với mặt bàn");
+                    isWarningOrientation = true;
+                    setTimeout(() => isWarningOrientation = false, 4000); // Tránh cảnh báo liên tục gây ồn
+                }
+                return; // Tạm dừng đếm ngược nếu bị nghiêng
+            }
+
             if (countdown > 0) {
-                speak("Bíp");
+                speak(countdown.toString());
                 countdown--;
             } else {
                 clearInterval(interval);
+                window.removeEventListener('deviceorientation', handleOrientation);
                 takeSnapshot();
             }
-        }, 1000);
+        }, 1200);
 
     } catch (err) {
         speak("Lỗi không thể mở Camera. Vui lòng kiểm tra lại quyền truy cập Camera của trình duyệt.");
