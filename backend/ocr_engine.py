@@ -51,13 +51,16 @@ def process_image(img_path: str) -> str:
         return "Lỗi: Không thể đọc được file ảnh."
 
     # Bước 1: Cho ảnh vào PaddleOCR để lấy Tọa độ các dòng chữ
+    print("AI bắt đầu quét tìm chữ trên ảnh...")
     result = det_model.ocr(img_path, cls=True, rec=False)
     
     # Nếu ảnh trắng bóc, không có chữ
     if not result or result[0] is None:
+        print("Không tìm thấy dòng chữ nào trên ảnh.")
         return ""
         
     boxes = result[0]
+    print(f"Đã tìm thấy {len(boxes)} dòng chữ. Bắt đầu đọc từng dòng...")
     
     # Bước 2: Sắp xếp các đoạn văn bản cho đúng trật tự từ Trên xuống Dưới, Trái qua Phải
     boxes.sort(key=lambda x: (x[0][1], x[0][0]))
@@ -65,7 +68,7 @@ def process_image(img_path: str) -> str:
     full_text = []
     
     # Bước 3: Cắt từng bức ảnh nhỏ và đưa cho VietOCR đọc tiếng Việt
-    for box in boxes:
+    for i, box in enumerate(boxes):
         pts = np.array(box, dtype=np.int32)
         
         # Tìm giới hạn khung hình chữ nhật bé nhất bao quanh dòng chữ
@@ -88,10 +91,13 @@ def process_image(img_path: str) -> str:
             # Quăng ảnh vào VietOCR nhận diện chữ
             text = detector.predict(pil_img)
             if text.strip():
+                print(f"- Dòng {i+1}/{len(boxes)}: {text.strip()}")
                 full_text.append(text.strip())
         except Exception as e:
             print(f"Lỗi khi đọc 1 dòng chữ nhỏ: {e}")
             continue
             
     # Nối tất cả các dòng chữ lại với nhau, cách nhau 1 dấu cách
-    return " ".join(full_text)
+    final_result = " ".join(full_text)
+    print(f"==> HOÀN THÀNH. Nội dung đọc được: {final_result}")
+    return final_result
