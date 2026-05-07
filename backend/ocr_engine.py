@@ -12,7 +12,7 @@ try:
     print("Đang tải mô hình PaddleOCR...")
     # use_angle_cls=True để nó tự lật lại ảnh nếu lỡ chụp ngược
     # rec=False vì chúng ta KHÔNG dùng nó để đọc chữ, chỉ dùng để cắt khung
-    det_model = PaddleOCR(use_angle_cls=True, lang="vi", rec=False, show_log=False)
+    det_model = PaddleOCR(use_angle_cls=True, lang="vi", rec=False)
 except Exception as e:
     print("Lỗi khởi tạo PaddleOCR:", e)
     det_model = None
