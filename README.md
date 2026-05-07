@@ -7,7 +7,7 @@ Do thời gian chỉ có **9 ngày liên tục**, chúng ta phải **CẮT BỎ 
 
 ```mermaid
 flowchart TD
-    subgraph Frontend ["🖥️ Giao diện Người Dùng (React)"]
+    subgraph Frontend ["🖥️ Giao diện Người Dùng (HTML/JS thuần)"]
         UI["Khu vực Upload & Chụp Camera"]
         Shortcut["Phím tắt: Enter (Tải File), C (Chụp ảnh), Space (Đọc)"]
         AudioPlayer["Trình phát Audio (Nghe TTS)"]
@@ -116,7 +116,7 @@ gantt
     - Lấy text thật chuyển thành Audio: `mp3_link = text_to_speech(text_that)`.
     - Trả cái `mp3_link` đó về cho Web. Xong việc!
 
-### 🎨 Thành viên 3: Frontend Developer (Làm việc với React / HTML JS)
+### 🎨 Thành viên 3: Frontend Developer (Làm việc với HTML/JS thuần)
 *   **Ngày 1-2 (Dựng UI, Upload File & Tích hợp Camera Hẹn Giờ):**
     - Tạo input ẩn `<input type="file">` để phục vụ tải file.
     - Nghiên cứu hàm `navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })` để ép trình duyệt luôn mở **Camera sau** của điện thoại (tuyệt đối không mở camera selfie).
@@ -170,11 +170,9 @@ Blind-OCR-System/
 │   └── weights/              # Chứa file pre-trained model (Nhớ đưa vào .gitignore)
 │
 ├── frontend/                 # Thành viên 3
-│   ├── index.html            # File gốc HTML
-│   ├── package.json          # Quản lý thư viện React/Vite
-│   └── src/                  
-│       ├── App.jsx           # Component chính chứa giao diện Upload ẩn
-│       └── api.js            # Nơi chuyên chứa các hàm gọi lên `http://localhost:8000`
+│   ├── index.html            # File gốc HTML chứa giao diện
+│   ├── style.css             # (Tùy chọn) File CSS chỉnh màu sắc tương phản
+│   └── app.js                # Chứa logic gọi Camera và gửi API lên `http://localhost:8000`
 │
 └── README.md                 # Hướng dẫn cách chạy dự án (Rất quan trọng để chép vào Báo cáo)
 ```
