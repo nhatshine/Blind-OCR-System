@@ -1,7 +1,12 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import os
 import time
+
+# Import 2 cỗ máy AI vừa chế tạo
+from ocr_engine import process_image
+from tts_engine import text_to_speech, AUDIO_DIR
 
 app = FastAPI(title="Blind OCR API", description="Mock API cho hệ thống đọc báo")
 
@@ -17,33 +22,37 @@ app.add_middleware(
 TEMP_DIR = "temp_images"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+# Để trình duyệt tải và nghe được file mp3, ta phải "mở cửa" thư mục temp_audio ra mạng
+app.mount("/audio", StaticFiles(directory=AUDIO_DIR), name="audio")
+
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     """
-    API Giả (Mock). Nhận file ảnh từ Frontend, lưu tạm, rồi trả về Data giả.
+    API Nhận file ảnh từ Frontend, chuyển cho AI phân tích, và trả về link file âm thanh.
     """
     try:
-        # 1. Lưu file nhận được (Để nhóm xem thử ảnh chụp từ điện thoại nét không)
+        # 1. LƯU ẢNH: Nhận từ điện thoại và lưu tạm vào Laptop
         file_path = os.path.join(TEMP_DIR, file.filename)
         with open(file_path, "wb") as f:
             content = await file.read()
             f.write(content)
             
-        # --- Ở BƯỚC NÀY SAU NÀY SẼ THAY BẰNG CODE AI THẬT ---
-        # text_ket_qua = ocr_engine.process_image(file_path)
-        # mp3_link = text_to_speech(text_ket_qua)
-        # ---------------------------------------------------
+        # 2. ĐỘNG CƠ AI SỐ 1: Bọc PaddleOCR và VietOCR đọc chữ
+        text_ket_qua = process_image(file_path)
         
-        # Giả lập thời gian AI chạy mất 3 giây
-        time.sleep(3)
+        # 3. ĐỘNG CƠ AI SỐ 2: Gọi gTTS biến chữ thành file MP3
+        mp3_filepath = text_to_speech(text_ket_qua)
         
-        # 3. Trả về DATA GIẢ để Frontend test ngay lập tức
+        # Tạo đường link tĩnh cho frontend. 
+        # Ví dụ mp3_filepath = "temp_audio/abc.mp3" -> url = "/audio/abc.mp3"
+        audio_url = f"/audio/{os.path.basename(mp3_filepath)}" if mp3_filepath else ""
+        
+        # 4. GỬI KẾT QUẢ VỀ CHO ĐIỆN THOẠI
         return {
             "status": "success",
-            "message": "Đã nhận được ảnh thành công!",
-            "filename": file.filename,
-            "text": "Xin chào, hệ thống nhận diện giọng nói đang hoạt động tốt. Đây là nội dung giả lập báo chí. Chúc bạn một ngày tốt lành.",
-            "audio_url": "" # Tạm thời để trống
+            "message": "Phân tích ảnh thành công!",
+            "text": text_ket_qua,
+            "audio_url": audio_url
         }
         
     except Exception as e:

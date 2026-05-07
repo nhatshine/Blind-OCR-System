@@ -114,8 +114,19 @@ async function sendToBackend(imageBlob) {
         const result = await response.json();
         
         if (result.status === "success") {
-            // Đọc nội dung AI (hiện tại là AI giả) trả về
-            speak(`Xử lý thành công. Trí tuệ nhân tạo đọc được như sau: ${result.text}`);
+            if (result.audio_url) {
+                // Tắt giọng báo cáo mặc định để chuẩn bị bật nhạc
+                speak("Đã xử lý xong, bắt đầu đọc văn bản.");
+                
+                // Mở file mp3 do gTTS (Backend) tạo ra
+                // Lấy IP hiện tại (vd: http://127.0.0.1:8000) ghép với /audio/file.mp3
+                const baseUrl = BACKEND_API_URL.replace("/upload", "");
+                const audioPlayer = new Audio(baseUrl + result.audio_url);
+                audioPlayer.play();
+            } else {
+                // Đọc nội dung AI trả về nếu không có file âm thanh
+                speak(`Xử lý thành công. Trí tuệ nhân tạo đọc được như sau: ${result.text}`);
+            }
         } else {
             speak("Có lỗi xảy ra bên trong Server.");
         }
