@@ -9,11 +9,25 @@ let isCameraOn = false;
 // ĐỊA CHỈ API CỦA BACKEND (Sẽ thay đổi nếu chạy qua Ngrok trên điện thoại)
 const BACKEND_API_URL = "http://127.0.0.1:8000/upload";
 
+// Bắt buộc trình duyệt tải trước danh sách giọng nói để tránh lỗi không tìm thấy giọng
+let voices = [];
+window.speechSynthesis.onvoiceschanged = () => {
+    voices = window.speechSynthesis.getVoices();
+};
+
 // Hàm phát giọng nói (Text-to-Speech có sẵn của trình duyệt)
 function speak(text) {
     statusReader.innerText = text; // Cập nhật chữ cho NVDA đọc
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "vi-VN";
+    utterance.lang = "vi-VN"; // Gắn cờ tiếng Việt
+    
+    // Ép trình duyệt tìm đúng giọng Tiếng Việt (Microsoft An hoặc Google Tiếng Việt)
+    if (voices.length === 0) voices = window.speechSynthesis.getVoices();
+    const viVoice = voices.find(voice => voice.lang.includes('vi') || voice.lang.includes('VN'));
+    if (viVoice) {
+        utterance.voice = viVoice;
+    }
+    
     window.speechSynthesis.speak(utterance);
 }
 
