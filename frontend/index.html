@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đọc Báo Cho Người Khiếm Thị</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #ffcc00;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 { font-size: 2rem; margin-bottom: 10px;}
+        p { font-size: 1.2rem; margin-bottom: 20px;}
+        
+        /* Chứa Video Camera, cố tình để mờ hoặc ẩn đi vì người khiếm thị không cần xem */
+        #camera-container {
+            width: 80%;
+            max-width: 400px;
+            border: 4px solid #ffcc00;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none; /* Ban đầu ẩn */
+        }
+        video {
+            width: 100%;
+            display: block;
+        }
+        
+        /* Thông báo cho trình đọc màn hình NVDA */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>HỆ THỐNG ĐỌC BÁO</h1>
+    <p>Chạm vào màn hình hoặc bấm phím <b>C</b> để kích hoạt Camera.</p>
+
+    <!-- Khu vực hiển thị luồng Camera -->
+    <div id="camera-container">
+        <video id="webcam" autoplay playsinline></video>
+    </div>
+
+    <!-- Canvas ẩn để "chụp" frame từ video -->
+    <canvas id="snapshot-canvas" style="display: none;"></canvas>
+
+    <!-- Thẻ div vô hình dành riêng cho phần mềm đọc màn hình (NVDA) -->
+    <div id="status-reader" class="sr-only" aria-live="polite">Hệ thống đã sẵn sàng.</div>
+
+    <!-- Script điều khiển chính -->
+    <script src="app.js"></script>
+</body>
+</html>
